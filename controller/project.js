@@ -26,7 +26,7 @@ async function handleProjectCreate(req, res) {
 
 async function handleGetAllProjects(req, res) {
     const { _id } = req.user
-    console.log("handleGetAllProjects _id::", _id);
+    console.log("handleGetAllProjects _id::", req.user);
 
     try {
         const allProject = await Project.find({ pro_ref: _id })
