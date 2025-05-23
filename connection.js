@@ -1,9 +1,8 @@
 const mongoose = require("mongoose");
 async function connectToMongo(url) {
   try {
-    console.log("url::",url);
-    
-    const connectString = await mongoose.connect(url);
+    console.log("url::",url);    
+    const connectString =await mongoose.connect(url);
 
     return connectString;
   } catch (error) {
