@@ -1,5 +1,6 @@
 const signUp = require("../model");
 const code_tbl = require("../model/code");
+const { createHmac, randomBytes } = require("crypto")
 const { handleOptSender, verifyJwtToken } = require("../service/auth");
 
 async function getAllLogedInUser(req, res) {
@@ -43,9 +44,55 @@ async function handleSignin(req, res) {
             const info = await handleOptSender.sendMail({
                 from: process.env.NODE_EMAIL_ADDRESS,
                 // TODO: here put sigend user's email id
-                to: "patadiyamanish07@gmail.com",
+                // to: "patadiyamanish07@gmail.com",
+                to:email,
                 subject: "Project Management System Forgot Password",
-                html: `<h1>Project Management System Signin Code : ${verificationCode}</h1>`
+                html: `<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Project Management System</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        padding: 20px;
+      }
+      .email-container {
+        max-width: 600px;
+        margin: auto;
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      }
+      h2 {
+        color: #333333;
+      }
+      p {
+        color: #555555;
+        line-height: 1.6;
+      }
+      .footer {
+        margin-top: 30px;
+        font-size: 12px;
+        color: #999999;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <h3>Welcome to Project Management System</h3>
+      <p>Hi ${email},</p>
+      <p>Signin OTP <h2>${verificationCode}</h2></p>
+      <p>Thank you for joining our Project Management System. We’re glad to have you onboard.</p>
+      
+      <div class="footer">
+        &copy; 2025 Project Management System. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>`
             })
             console.log("info", info);
             await code_tbl.create({
@@ -139,9 +186,56 @@ async function handleverifyEmailAndSendOtp(req, res) {
         const info = handleOptSender.sendMail({
             from: process.env.NODE_EMAIL_ADDRESS,
             // TODO: here put sigend user's email id
-            to: "patadiyamanish07@gmail.com",
+            // to: "patadiyamanish07@gmail.com",
+            to:email,
             subject: "Project Management System Forgot Password...",
-            html: `<h1>Project Management System Forgot Password OTP :${code}</h1>`
+            // html: `<h1>Project Management System Forgot Password OTP :${code}</h1>`
+            html: `<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Project Management System</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        padding: 20px;
+      }
+      .email-container {
+        max-width: 600px;
+        margin: auto;
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      }
+      h2 {
+        color: #333333;
+      }
+      p {
+        color: #555555;
+        line-height: 1.6;
+      }
+      .footer {
+        margin-top: 30px;
+        font-size: 12px;
+        color: #999999;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <h3>Welcome to Project Management System</h3>
+      <p>Hi ${email},</p>
+      <p>Forgot OTP <h2>${code}</h2></p>
+      <p>Thank you for joining our Project Management System. We’re glad to have you onboard.</p>
+      
+      <div class="footer">
+        &copy; 2025 Project Management System. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>`
         })
 
         await code_tbl.create({
@@ -156,7 +250,7 @@ async function handleverifyEmailAndSendOtp(req, res) {
                 success: true,
                 // TODO: remove this code does not sent in return 
                 otp: code,
-                email:user._id
+                email: user._id
             });
 
     } catch (error) {
@@ -174,7 +268,7 @@ async function handleverifyforgototp(req, res) {
     // const {id}=req.user
     // const userId = req.session.user_id
     // at forgot screen pass _id and set from front-end
-    const { otp,userId} = req.body;
+    const { otp, userId } = req.body;
 
     console.log("handleverifyforgototp userd ::", req.session.user_id);
     console.log("handleverifyforgototp userd otp::", otp);
@@ -191,7 +285,7 @@ async function handleverifyforgototp(req, res) {
         }
         console.log("payload4::");
         if (record.code !== otp) {
-            return res.status(400).json({ msg: "Invalid OTP!" })
+            return res.status(404).json({ msg: "Invalid OTP!" })
         }
         console.log("payload5::");
         await code_tbl.deleteOne({ email: userId })
@@ -204,14 +298,28 @@ async function handleverifyforgototp(req, res) {
             .status(500)
             .json({
                 msg: "Something went wrong in handleVerifyOtp",
-                success: false
+                success: false,
+                user_id: userId
             });
     }
 }
 async function handlechangepassword(req, res) {
-    const { password } = req.body;
+    const { password, user_id } = req.body;
     try {
-            
+        if (!user_id || !password) {
+            return res.status(404).json({ msg: "Fill All Data!" })
+
+        }
+        const salt = randomBytes(16).toString();
+        const hashedpwd = createHmac("sha256", salt).update(password).digest("hex")
+        const updatedData = {
+            password: hashedpwd,
+            salt: salt
+        }
+        const user =await signUp.findByIdAndUpdate({ _id: user_id }, updatedData)
+        console.log("updated password::",user);
+        
+          return res.status(200).json({ msg: "Password Updated!", success: true,id:user._id })
     } catch (error) {
         return res
             .status(500)
@@ -221,4 +329,4 @@ async function handlechangepassword(req, res) {
             });
     }
 }
-module.exports = { handleSignup, handleSignin, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp };
+module.exports = { handleSignup, handleSignin, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp, handlechangepassword };
