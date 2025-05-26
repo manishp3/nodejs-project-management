@@ -14,11 +14,19 @@ const taskSchema = mongoose.Schema(
     },
     assign_to: {
       // type: String,
+      // TODO: i think it only assign to signe user only
       type: mongoose.Schema.Types.ObjectId,
       ref: "signup"
     },
     summary: {
       type: String,
+    },
+    due_date: {
+      type: Date,
+    },
+    priority: {
+      type: String,
+      enum: ["Low", "Normal", "High"]
     },
     image: {
       type: String,

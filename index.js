@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 require("dotenv").config()
 const cookie = require("cookie-parser")
+const session = require("express-session")
 const connectToMongo = require("./connection");
 const autRouter = require("./router/auth");
 const projectRouter = require("./router/project");
@@ -11,9 +12,18 @@ const { validateAuthToken } = require("./middleware/auth");
 app.use(express.urlencoded({ extended: false }));
 // enable for other router;
 // app.use(validateAuthToken())
+// not valtion allbracn ok
+
 app.use(express.json())
 app.use(cookie())
 app.use(fileUplader())
+app.use(session({
+  secret: process.env.SECRET,
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }  //set true only in production with HTTPS
+
+}))
 app.use("/public", express.static("public"));
 
 connectToMongo(process.env.MONGO_URL);
@@ -31,3 +41,5 @@ app.listen(process.env.PORT, () =>
 );
 
 
+
+// TODO: handlechangepassword make 

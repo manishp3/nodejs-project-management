@@ -12,7 +12,7 @@ const codeSchema = mongoose.Schema(
       type: String,
       required: [true, "Code is Required"],
     },
-
+// createdAt: { type: Date, default: Date.now, expires: 300 } 
   },
   { timestamps: true }
 );

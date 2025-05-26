@@ -4,7 +4,7 @@ const project_tbl  = require("../model/project");
 const user_tbl     = require("../model/index");
 async function handleCreateTask(req, res) {
   const pro_id = req.params.pro_id
-  const { label, summary, status, assign_to } = req.body;
+  const { label, summary, status, assign_to,priority ,due_date} = req.body;
   const imageData = req.files?.image;
   console.log("pro_id::", pro_id);
 
@@ -15,7 +15,9 @@ async function handleCreateTask(req, res) {
       label: label,
       summary: summary,
       status: status,
-      assign_to: assign_to,
+      priority:priority,
+      due_date:due_date,
+      assign_to: assign_to, 
 
     }
     console.log("pro_id::1", pro_id);
@@ -143,7 +145,7 @@ async function handleGetTask(req, res) {
 }
 async function handleUpdateTask(req, res) {
   const _id = req.params.task_id
-  const { label, summary, status, assign_to } = req.body;
+  const { label, summary, status, assign_to, priority ,due_date} = req.body;
   const imageData = req.files?.image;
   console.log("handleUpdateTask _id::", _id);
   console.log("handleUpdateTask imageData::", imageData);
@@ -153,6 +155,12 @@ async function handleUpdateTask(req, res) {
 
     if (label) {
       updatedData.label = label
+    }
+    if (priority) {
+      updatedData.priority =priority
+    }
+    if (due_date) {
+      updatedData.due_date =due_date
     }
     if (assign_to) {
       updatedData.assign_to = assign_to
