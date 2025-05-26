@@ -270,7 +270,7 @@ async function handleverifyforgototp(req, res) {
     // at forgot screen pass _id and set from front-end
     const { otp, userId } = req.body;
 
-    console.log("handleverifyforgototp userd ::", req.session.user_id);
+    // console.log("handleverifyforgototp userd ::", req.session.user_id);
     console.log("handleverifyforgototp userd otp::", otp);
     try {
         // const userId = payload._id;
