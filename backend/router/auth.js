@@ -1,5 +1,5 @@
 const express = require("express");
-const { handleSignup, handleSignin, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp, handlechangepassword, handleGoogleSignup } = require("../controller/auth");
+const { handleSignup, handleSignin, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp, handlechangepassword, handleGoogleSignup,handlelogout } = require("../controller/auth");
 
 const router = express.Router();
 router.post("/signup", (req, res) => {
@@ -29,5 +29,8 @@ router.post("/verifyforgototp", async (req, res) => {
 });
 router.post("/forgotpassword", async (req, res) => {
   handlechangepassword(req, res);
+});
+router.post("/logout", async (req, res) => {
+  handlelogout(req, res);
 });
 module.exports = router;

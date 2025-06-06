@@ -9,7 +9,11 @@ async function getAllLogedInUser(req, res) {
   if (!users) {
     return res.status(404).json({ msg: "No Users!", success: false })
   }
-  return res.status(200).json({ msg: "Get All LoggedIn Users!", user: users })
+  const memberOptions = users.map(member => ({
+  value: member._id,
+  label: member.username
+}));
+  return res.status(200).json({ msg: "Get All LoggedIn Users!", user: memberOptions})
 }
 async function handleSignup(req, res) {
   try {
@@ -35,28 +39,126 @@ async function handleSignup(req, res) {
   }
 }
 
+// async function handleSignin(req, res) {
+//   console.log("handleSignin:", req.body);
+
+//   //  DONE: add jwt token ,add nodemailer on login time
+//   try {
+
+//     const { email, password } = req.body;
+//     const token = await signUp.matchPassword(email, password)
+//     console.log("log og token handlsignin::", token);
+//     const user = await signUp.findOne({ email: email })
+//     if (!user) {
+//       return res.status(201).json({ msg: "No User Exist!" })
+//     }
+//     try {
+//       token = await signUp.matchPassword(email, password);
+//     } catch (err) {
+//       return res.status(401).json({ msg: err.message, success: false });
+//     }
+//     if (token) {
+//       const verificationCode = Math.floor(Math.random() * 100000).toString().padStart(5, "0")
+//       const info = await handleOptSender.sendMail({
+//         from: process.env.NODE_EMAIL_ADDRESS,
+//         // TODO: here put sigend user's email id
+//         // to: "patadiyamanish07@gmail.com",
+//         to: email,
+//         subject: "Project Management System Forgot Password",
+//         html: `<html>
+//   <head>
+//     <meta charset="UTF-8" />
+//     <title>Project Management System</title>
+//     <style>
+//       body {
+//         font-family: Arial, sans-serif;
+//         background-color: #f4f4f4;
+//         padding: 20px;
+//       }
+//       .email-container {
+//         max-width: 600px;
+//         margin: auto;
+//         background-color: #ffffff;
+//         padding: 30px;
+//         border-radius: 8px;
+//         box-shadow: 0 0 10px rgba(0,0,0,0.05);
+//       }
+//       h2 {
+//         color: #333333;
+//       }
+//       p {
+//         color: #555555;
+//         line-height: 1.6;
+//       }
+//       .footer {
+//         margin-top: 30px;
+//         font-size: 12px;
+//         color: #999999;
+//         text-align: center;
+//       }
+//     </style>
+//   </head>
+//   <body>
+//     <div class="email-container">
+//       <h3>Welcome to Project Management System</h3>
+//       <p>Hi ${email},</p>
+//       <p>Signin OTP <h2>${verificationCode}</h2></p>
+//       <p>Thank you for joining our Project Management System. We’re glad to have you onboard.</p>
+
+//       <div class="footer">
+//         &copy; 2025 Project Management System. All rights reserved.
+//       </div>
+//     </div>
+//   </body>
+// </html>`
+//       })
+//       console.log("info", info);
+//       const isExist = await code_tbl.findOne({ email: user._id })
+//       // if already code exist then update it
+//       if (isExist) {
+//         await code_tbl.findOneAndUpdate({ email: user._id }, { code: verificationCode })
+
+//       }
+//       else {
+//         await code_tbl.create({
+//           email: user._id,
+//           code: verificationCode
+//         })
+//       }
+//       return res.cookie("token", token).status(200).json({ msg: "Signin success", success: true, token: token })
+//     }
+
+//     return res.status(401).json({ msg: "Unautheticated", success: false })
+//   } catch (error) {
+//     console.error("Error in handleSignin:", error);
+//     return res.status(500).json({ msg: "Internal Server Error singin", success: false });
+//   }
+// }
+
 async function handleSignin(req, res) {
   console.log("handleSignin:", req.body);
-
-  //  DONE: add jwt token ,add nodemailer on login time
   try {
-
     const { email, password } = req.body;
-    const token = await signUp.matchPassword(email, password)
-    console.log("log og token handlsignin::", token);
-    const user = await signUp.findOne({ email: email })
+
+    const user = await signUp.findOne({ email: email });
     if (!user) {
-      return res.status(201).json({ msg: "No User Exist!" })
+      return res.status(404).json({ msg: "No User Exist!" });
     }
-    if (token) {
-      const verificationCode = Math.floor(Math.random() * 100000).toString().padStart(5, "0")
-      const info = await handleOptSender.sendMail({
-        from: process.env.NODE_EMAIL_ADDRESS,
-        // TODO: here put sigend user's email id
-        // to: "patadiyamanish07@gmail.com",
-        to: email,
-        subject: "Project Management System Forgot Password",
-        html: `<html>
+
+    let token;
+    try {
+      token = await signUp.matchPassword(email, password);
+    } catch (err) {
+      return res.status(401).json({ msg: err.message, success: false });
+    }
+
+    // Generate OTP and send email
+    const verificationCode = Math.floor(Math.random() * 100000).toString().padStart(5, "0");
+    await handleOptSender.sendMail({
+      from: process.env.NODE_EMAIL_ADDRESS,
+      to: email,
+      subject: "Project Management System Forgot Password",
+      html: ` <html>
   <head>
     <meta charset="UTF-8" />
     <title>Project Management System</title>
@@ -102,29 +204,22 @@ async function handleSignin(req, res) {
     </div>
   </body>
 </html>`
-      })
-      console.log("info", info);
-      const isExist = await code_tbl.findOne({ email: user._id })
-      // if already code exist then update it
-      if (isExist) {
-        await code_tbl.findOneAndUpdate({ email: user._id }, { code: verificationCode })
+    });
 
-      }
-      else {
-        await code_tbl.create({
-          email: user._id,
-          code: verificationCode
-        })
-      }
-      return res.cookie("token", token).status(200).json({ msg: "Signin success", success: true, token: token })
+    const isExist = await code_tbl.findOne({ email: user._id });
+    if (isExist) {
+      await code_tbl.findOneAndUpdate({ email: user._id }, { code: verificationCode });
+    } else {
+      await code_tbl.create({ email: user._id, code: verificationCode });
     }
 
-    return res.status(401).json({ msg: "Unautheticated", success: false })
+    return res.cookie("token", token).status(200).json({ msg: "OTP Sent to Your Email", success: true, token });
   } catch (error) {
     console.error("Error in handleSignin:", error);
-    return res.status(500).json({ msg: "Internal Server Error singin", success: false });
+    return res.status(500).json({ msg: "Internal Server Error signin", success: false });
   }
 }
+
 
 
 async function handleVerifyOtp(req, res) {
@@ -325,7 +420,7 @@ async function handleverifyforgototp(req, res) {
     // req.session.destroy();
     console.log("payload6::");
 
-    return res.status(200).json({ msg: "OTP Verified!", success: true })
+    return res.status(200).json({ msg: "Welcome To Dashboard!", success: true })
   } catch (error) {
     return res
       .status(500)
@@ -362,4 +457,14 @@ async function handlechangepassword(req, res) {
       });
   }
 }
-module.exports = { handleSignup, handleSignin, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp, handlechangepassword };
+async function handlelogout(req, res) {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: true, // use true if HTTPS
+    sameSite: "Strict",
+  });
+
+
+  return res.status(201).json({ msg: "Logout success!" })
+}
+module.exports = { handleSignup, handlelogout, handleSignin, handleVerifyOtp, getAllLogedInUser, handleverifyEmailAndSendOtp, handleverifyforgototp, handlechangepassword };

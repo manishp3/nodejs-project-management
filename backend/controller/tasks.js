@@ -1,10 +1,10 @@
-const mongoose     = require("mongoose");
+const mongoose = require("mongoose");
 const task_tbl = require("../model/tasks");
-const project_tbl  = require("../model/project");
-const user_tbl     = require("../model/index");
+const project_tbl = require("../model/project");
+const user_tbl = require("../model/index");
 async function handleCreateTask(req, res) {
   const pro_id = req.params.pro_id
-  const { label, summary, status, assign_to,priority ,due_date} = req.body;
+  const { label, summary, status, assign_to, priority, due_date } = req.body;
   const imageData = req.files?.image;
   console.log("pro_id::", pro_id);
 
@@ -15,9 +15,9 @@ async function handleCreateTask(req, res) {
       label: label,
       summary: summary,
       status: status,
-      priority:priority,
-      due_date:due_date,
-      assign_to: assign_to, 
+      priority: priority,
+      due_date: due_date,
+      assign_to: assign_to,
 
     }
     console.log("pro_id::1", pro_id);
@@ -38,7 +38,11 @@ async function handleCreateTask(req, res) {
 
 
     const data = await task_tbl.create(taskData)
+    const taskCount = await task_tbl.countDocuments({ pro_ref: pro_id });
+    const addTaskToProject = await project_tbl.findByIdAndUpdate(pro_id, { total_task: taskCount })
+
     console.log("pro_id::6", data);
+    console.log("addTaskToProject::6", addTaskToProject);
 
 
     return res.status(200).json({ msg: "task added!", success: true, task: data })
@@ -145,7 +149,7 @@ async function handleGetTask(req, res) {
 }
 async function handleUpdateTask(req, res) {
   const _id = req.params.task_id
-  const { label, summary, status, assign_to, priority ,due_date} = req.body;
+  const { label, summary, status, assign_to, priority, due_date } = req.body;
   const imageData = req.files?.image;
   console.log("handleUpdateTask _id::", _id);
   console.log("handleUpdateTask imageData::", imageData);
@@ -157,10 +161,10 @@ async function handleUpdateTask(req, res) {
       updatedData.label = label
     }
     if (priority) {
-      updatedData.priority =priority
+      updatedData.priority = priority
     }
     if (due_date) {
-      updatedData.due_date =due_date
+      updatedData.due_date = due_date
     }
     if (assign_to) {
       updatedData.assign_to = assign_to
@@ -191,12 +195,18 @@ async function handleUpdateTask(req, res) {
 async function handleDeleteTask(req, res) {
   const taskId = req.params.task_id;
   console.log("taskId del::", taskId);
-
+  const task = task_tbl.findById(taskId)
   try {
     const task = await task_tbl.findByIdAndDelete({ _id: taskId })
     if (!task) {
       return res.json({ msg: "No task Found!", success: false })
     }
+    console.log("log of task::",task);
+    
+    pro_id = task.pro_ref;
+    const upadted=await project_tbl.findByIdAndUpdate(pro_id, { $inc: { total_task: -1 } })
+    console.log("log of task::upadted",upadted);
+
     return res.status(200).json({ msg: "task Deleted!", success: true, task: task._id })
   }
   catch (err) {

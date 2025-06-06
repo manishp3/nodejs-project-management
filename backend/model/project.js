@@ -7,6 +7,10 @@ const proSchema = mongoose.Schema(
       required: [true, "Project Name is Required"],
       trim: true,
     },
+    total_task: {
+  type: Number,
+  default: 0,
+},
     pro_ref: {
       type: String,
       trim: true

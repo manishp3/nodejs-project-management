@@ -70,7 +70,7 @@ async function handleGetProject(req, res) {
 
 }
 async function handleProjectUpdate(req, res) {
-    const { project_name, members } = req.body;
+    const { project_name, members,total_task } = req.body;
     const { id } = req.params;
     console.log("handleProjectUpdate project_name::", project_name);
     console.log("handleProjectUpdate id::", id);
@@ -79,6 +79,9 @@ async function handleProjectUpdate(req, res) {
         let updateData = {}
         if (!id || !project_name) {
             return res.status(404).json({ msg: "data not found!" })
+        }
+        if(total_task){
+            updateData.total_task=total_task
         }
         if (members) {
             updateData.members = members
@@ -106,6 +109,7 @@ async function handleProjectDelete(req, res) {
     try {
         const dId = await Project.findByIdAndDelete({ _id: id })
         await task_tbl.deleteMany({pro_ref:dId._id})
+         const taskCount = await task_tbl.countDocuments({ pro_ref:id });
         return res.status(201).json({ msg: "Project Deleted!", success: true, data: dId._id })
     } catch (error) {
         return res.status(500).json({ msg: "Something went wrong in project delete!", success: false })
